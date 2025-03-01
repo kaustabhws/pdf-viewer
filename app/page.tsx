@@ -1,101 +1,149 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import type React from "react";
+
+import { useState } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/esm/Page/TextLayer.css";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ChevronLeft, ChevronRight, Upload, X } from "lucide-react";
+
+// Set up the PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+export default function PDFViewer() {
+  const [pdfFile, setPdfFile] = useState<string | null>(null);
+  const [numPages, setNumPages] = useState<number>(0);
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [fileName, setFileName] = useState<string>("");
+
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
+    setNumPages(numPages);
+    setPageNumber(1); // Reset to first page on new file upload
+  }
+
+  function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (file && file.type === "application/pdf") {
+      const fileURL = URL.createObjectURL(file);
+      setPdfFile(fileURL);
+      setFileName(file.name);
+    } else {
+      alert("Please select a valid PDF file.");
+    }
+  }
+
+  function clearFile() {
+    setPdfFile(null);
+    setFileName("");
+    setNumPages(0);
+  }
+
+  function goToPrevPage() {
+    setPageNumber((prev) => (prev > 1 ? prev - 1 : prev));
+  }
+
+  function goToNextPage() {
+    setPageNumber((prev) => (prev < numPages ? prev + 1 : prev));
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="flex flex-col items-center w-full max-w-3xl mx-auto p-6 space-y-6">
+      <div className="w-full">
+        <div className="flex flex-col space-y-2">
+          <Label htmlFor="pdf-upload" className="text-base font-medium">
+            Upload PDF
+          </Label>
+          <div className="flex flex-col sm:flex-row items-center gap-2">
+            <div className="relative flex-1 w-full">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full flex justify-start text-left font-normal"
+                onClick={() => document.getElementById("pdf-upload")?.click()}
+              >
+                <Upload className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">
+                  {fileName ? fileName : "Choose file..."}
+                </span>
+              </Button>
+              <Input
+                id="pdf-upload"
+                type="file"
+                accept="application/pdf"
+                onChange={handleFileUpload}
+                className="sr-only"
+              />
+            </div>
+            {fileName && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={clearFile}
+                className="flex-shrink-0"
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Clear</span>
+              </Button>
+            )}
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+
+      {pdfFile ? (
+        <Card className="w-full overflow-hidden">
+          <CardContent className="p-0 flex flex-col items-center">
+            <div className="w-full overflow-auto p-4">
+              <Document file={pdfFile} onLoadSuccess={onDocumentLoadSuccess}>
+                <Page
+                  pageNumber={pageNumber}
+                  renderTextLayer={true}
+                  renderAnnotationLayer={true}
+                  className="mx-auto"
+                />
+              </Document>
+            </div>
+
+            <div className="flex items-center justify-between w-full p-4 border-t">
+              <Button
+                onClick={goToPrevPage}
+                disabled={pageNumber <= 1}
+                variant="outline"
+                size="sm"
+              >
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Previous
+              </Button>
+
+              <div className="text-sm font-medium">
+                Page {pageNumber} of {numPages}
+              </div>
+
+              <Button
+                onClick={goToNextPage}
+                disabled={pageNumber >= numPages}
+                variant="outline"
+                size="sm"
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="w-full flex flex-col items-center justify-center border border-dashed rounded-lg p-12 text-center">
+          <Upload className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium">No PDF selected</h3>
+          <p className="text-sm text-muted-foreground mt-2">
+            Upload a PDF file to view its contents
+          </p>
+        </div>
+      )}
     </div>
   );
 }
