@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/TextLayer.css";
@@ -10,37 +9,32 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Upload, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Link } from "lucide-react";
 
 // Set up the PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 export default function PDFViewer() {
-  const [pdfFile, setPdfFile] = useState<string | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string>(""); // Stores the URL input
+  const [pdfFile, setPdfFile] = useState<string | null>(null); // Stores the final URL to display
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
-  const [fileName, setFileName] = useState<string>("");
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
     setNumPages(numPages);
-    setPageNumber(1); // Reset to first page on new file upload
+    setPageNumber(1); // Reset to first page when a new document loads
   }
 
-  function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (file && file.type === "application/pdf") {
-      const fileURL = URL.createObjectURL(file);
-      setPdfFile(fileURL);
-      setFileName(file.name);
+  function handleUrlInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setPdfUrl(event.target.value);
+  }
+
+  function handleViewPdf() {
+    if (pdfUrl.trim()) {
+      setPdfFile(pdfUrl);
     } else {
-      alert("Please select a valid PDF file.");
+      alert("Please enter a valid PDF URL.");
     }
-  }
-
-  function clearFile() {
-    setPdfFile(null);
-    setFileName("");
-    setNumPages(0);
   }
 
   function goToPrevPage() {
@@ -53,47 +47,28 @@ export default function PDFViewer() {
 
   return (
     <div className="flex flex-col items-center w-full max-w-3xl mx-auto p-6 space-y-6">
+      {/* PDF URL Input */}
       <div className="w-full">
-        <div className="flex flex-col space-y-2">
-          <Label htmlFor="pdf-upload" className="text-base font-medium">
-            Upload PDF
-          </Label>
-          <div className="flex flex-col sm:flex-row items-center gap-2">
-            <div className="relative flex-1 w-full">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full flex justify-start text-left font-normal"
-                onClick={() => document.getElementById("pdf-upload")?.click()}
-              >
-                <Upload className="h-4 w-4 mr-2 flex-shrink-0" />
-                <span className="truncate">
-                  {fileName ? fileName : "Choose file..."}
-                </span>
-              </Button>
-              <Input
-                id="pdf-upload"
-                type="file"
-                accept="application/pdf"
-                onChange={handleFileUpload}
-                className="sr-only"
-              />
-            </div>
-            {fileName && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={clearFile}
-                className="flex-shrink-0"
-              >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Clear</span>
-              </Button>
-            )}
-          </div>
+        <Label htmlFor="pdf-url" className="text-base font-medium">
+          Enter PDF URL
+        </Label>
+        <div className="flex gap-2">
+          <Input
+            id="pdf-url"
+            type="url"
+            placeholder="Enter PDF URL..."
+            value={pdfUrl}
+            onChange={handleUrlInputChange}
+            className="flex-1"
+          />
+          <Button variant="outline" onClick={handleViewPdf}>
+            <Link className="h-4 w-4 mr-2" />
+            View PDF
+          </Button>
         </div>
       </div>
 
+      {/* PDF Viewer */}
       {pdfFile ? (
         <Card className="w-full overflow-hidden">
           <CardContent className="p-0 flex flex-col items-center">
@@ -137,10 +112,10 @@ export default function PDFViewer() {
         </Card>
       ) : (
         <div className="w-full flex flex-col items-center justify-center border border-dashed rounded-lg p-12 text-center">
-          <Upload className="h-12 w-12 text-muted-foreground mb-4" />
+          <Link className="h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium">No PDF selected</h3>
           <p className="text-sm text-muted-foreground mt-2">
-            Upload a PDF file to view its contents
+            Enter a PDF URL and click "View PDF" to load it.
           </p>
         </div>
       )}
