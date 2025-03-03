@@ -115,7 +115,7 @@ export default function PDFViewer() {
           <Link className="h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium">No PDF selected</h3>
           <p className="text-sm text-muted-foreground mt-2">
-            Enter a PDF URL and click "View PDF" to load it.
+            Enter a PDF URL and click &quot;View PDF&quot; to load it.
           </p>
         </div>
       )}
